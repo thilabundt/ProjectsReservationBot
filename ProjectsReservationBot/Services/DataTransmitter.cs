@@ -139,17 +139,14 @@ public class DataTransmitter
     /// <summary>
     /// Возвращает номера всех существующих проектов.
     /// </summary>
-    public async Task<List<string>> GetAllProjectsNumbersAsync() {
+    public async Task<List<Project>> GetAllProjectsAsync() {
         var projectsValues = await googleSheetsService.GetProjectsValuesAsync();
         if (projectsValues == null) {
-            return new List<string>();
+            return new List<Project>();
         }
 
         var projects = mapper.MapProjectsFromValues(projectsValues);
-
-        return projects
-            .Select(project => project.Number)
-            .ToList();
+        return projects;
     }
 
     /// <summary>

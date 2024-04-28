@@ -1,3 +1,4 @@
+using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -16,8 +17,8 @@ public class ProjectSelectionDialogState : IDialogState
     }
 
     public async Task OnEnter() {
-        var projectsNumbers = await Dialog.DataTransmitter.GetAllProjectsNumbersAsync();
-        var joinedNumbers = string.Join(", ", projectsNumbers);
+        var projects = await Dialog.DataTransmitter.GetAllProjectsAsync();
+        var projectsText = FormatProjectsText(projects);
 
         var noSuitableProjectsButton = new InlineKeyboardButton("Я не нашёл необходимую мне проектную заявку") {
             CallbackData = "noSuitableProjectsButton"
@@ -32,8 +33,9 @@ public class ProjectSelectionDialogState : IDialogState
             "(Обращаем Ваше внимание на тот факт, что носитель проблемы одновременно может являться заказчиком)\n" +
             "\u2714\ufe0f <strong>Барьер проекта</strong> отвечает на следующий вопрос: «Что мешает носителю проблемы достичь поставленную цель?»\n" +
             "\u2714\ufe0f <strong>Существующие решения</strong> - это перечень инструментов, методов, подходов и готовых решений, неподходящих для выполнения поставленной цели\n\n" +
-            $"Список доступных для выбора номеров проектов: {joinedNumbers}.\n" +
-            "Сделайте пожалуйста свой выбор.",
+            "Ниже приведен список доступных для выбора проектов:\n\n" +
+            $"{projectsText}\n" +
+            "Введите, пожалуйста, <strong><u>номер</u></strong> выбранного Вами проекта.",
             parseMode: ParseMode.Html,
             replyMarkup: inlineKeyboard
         );
@@ -75,7 +77,16 @@ public class ProjectSelectionDialogState : IDialogState
         }
 
         var projectName = await Dialog.DataTransmitter.GetProjectNameAsync(messageText);
-        await Dialog.BotClient.SendTextMessageAsync(user.Id, $"Спасибо за сделанный выбор. Желаем успехов в реализации выбранного проекта: {projectName}");
+        await Dialog.BotClient.SendTextMessageAsync(user.Id, $"Спасибо за сделанный выбор! Желаем успехов в реализации проекта \"{projectName}\"");
         await Dialog.SetState(new CompletedDialogState(Dialog));
+    }
+
+    private string FormatProjectsText(List<Project> projects) {
+        var stringBuilder = new StringBuilder();
+        foreach (var project in projects) {
+            stringBuilder.Append($"{project.Number} - \"{project.Name}\"\n");
+        }
+
+        return stringBuilder.ToString();
     }
 }

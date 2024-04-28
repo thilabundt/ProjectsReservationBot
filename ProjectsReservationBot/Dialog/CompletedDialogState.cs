@@ -29,6 +29,6 @@ public class CompletedDialogState : IDialogState
                                                                  "Воспользуйтесь командой /start для просмотра статуса");
             return;
         }
-        await Dialog.BotClient.SendTextMessageAsync(user.Id, $"Вы уже сделали свой выбор (проект \"{reservedProjectName}\"). Изменение заявки невозможно");
+        await Dialog.BotClient.SendTextMessageAsync(user.Id, $"Вы уже выбрали проект \"{reservedProjectName}\". Изменение заявки невозможно");
     }
 }

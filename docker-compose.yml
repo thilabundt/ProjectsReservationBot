@@ -2,6 +2,4 @@ version: '3'
 services:
   bot:
     build: .
-    volumes:
-      - ./credentials.json:/App/credentials.json
     env_file: .env
