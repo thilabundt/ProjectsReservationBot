@@ -18,7 +18,7 @@ public class ProjectSelectionDialogState : IDialogState
 
     public async Task OnEnter() {
         var projects = await Dialog.DataTransmitter.GetAllProjectsAsync();
-        var projectsText = FormatProjectsText(projects);
+        var projectsMessagesText = FormatProjectsText(projects);
 
         var noSuitableProjectsButton = new InlineKeyboardButton("Я не нашёл необходимую мне проектную заявку") {
             CallbackData = "noSuitableProjectsButton"
@@ -33,12 +33,15 @@ public class ProjectSelectionDialogState : IDialogState
             "(Обращаем Ваше внимание на тот факт, что носитель проблемы одновременно может являться заказчиком)\n" +
             "\u2714\ufe0f <strong>Барьер проекта</strong> отвечает на следующий вопрос: «Что мешает носителю проблемы достичь поставленную цель?»\n" +
             "\u2714\ufe0f <strong>Существующие решения</strong> - это перечень инструментов, методов, подходов и готовых решений, неподходящих для выполнения поставленной цели\n\n" +
-            "Ниже приведен список доступных для выбора проектов:\n\n" +
-            $"{projectsText}\n" +
+            "Ниже приведен список доступных для выбора проектов.\n" +
             "Введите, пожалуйста, <strong><u>номер</u></strong> выбранного Вами проекта.",
             parseMode: ParseMode.Html,
             replyMarkup: inlineKeyboard
         );
+
+        foreach (var messageText in projectsMessagesText) {
+            await Dialog.BotClient.SendTextMessageAsync(Dialog.UserId, messageText);
+        }
     }
 
     public async Task Reply(Message message) {
@@ -81,12 +84,20 @@ public class ProjectSelectionDialogState : IDialogState
         await Dialog.SetState(new CompletedDialogState(Dialog));
     }
 
-    private string FormatProjectsText(List<Project> projects) {
+    private List<string> FormatProjectsText(List<Project> projects) {
+        var result = new List<string>();
         var stringBuilder = new StringBuilder();
         foreach (var project in projects) {
-            stringBuilder.Append($"{project.Number} - \"{project.Name}\"\n");
+            var projectLine = $"{project.Number} - \"{project.Name}\"\n";
+            if (stringBuilder.Length + projectLine.Length > 4096) {
+                result.Add(stringBuilder.ToString());
+                stringBuilder.Clear();
+            }
+            stringBuilder.Append(projectLine);
         }
-
-        return stringBuilder.ToString();
+        if (stringBuilder.Length > 0) {
+            result.Add(stringBuilder.ToString());
+        }
+        return result;
     }
 }
